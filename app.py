@@ -39,7 +39,13 @@ def bye():
 def add_two_nums():
     response.content_type = 'application/json'
     data: dict = request.json
-    return dumps(data)
+    x = data.get("number_one")
+    y = data.get("number_two")
+    return dumps({"is_sum_numbers": {
+        "number_one": x,
+        "number_two": y,
+        "result_sum": x + y
+    }})
 
 
 @error(404)
