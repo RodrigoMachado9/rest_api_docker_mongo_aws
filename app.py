@@ -1,4 +1,4 @@
-from bottle import response, run, error, get
+from bottle import response, request, run, error, get, post
 from json import dumps
 
 @get('/')
@@ -34,6 +34,13 @@ def bye():
     }
     response.content_type = 'application/json'
     return dumps(data)
+
+@post('/add_two_nums')
+def add_two_nums():
+    response.content_type = 'application/json'
+    data: dict = request.json
+    return dumps(data)
+
 
 @error(404)
 def error404(error):
