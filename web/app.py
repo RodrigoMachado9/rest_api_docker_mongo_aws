@@ -87,4 +87,4 @@ def error500(error):
 
 
 if __name__ == '__main__':
-    run(debug=True, reload=True, port=8080)
+    run(host="0.0.0.0", port=8080, debug=True, reload=True)
