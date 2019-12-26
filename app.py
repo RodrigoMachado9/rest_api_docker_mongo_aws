@@ -1,6 +1,8 @@
 from bottle import response, request, run, error, get, post
 from json import dumps
 
+
+
 @get('/')
 def hello():
     status = response.status_code
@@ -10,7 +12,7 @@ def hello():
 def hi_there_everyone():
     return "I just hit /hithere"
 
-@get('/multiplication')
+@get('/consult')
 def bye():
     # prepare a response for the request that came to /bye
     c = 2*534
@@ -35,16 +37,41 @@ def bye():
     response.content_type = 'application/json'
     return dumps(data)
 
-@post('/add_two_nums')
-def add_two_nums():
+@post('/sum_two_nums')
+def sum_two_nums():
     response.content_type = 'application/json'
     data: dict = request.json
-    x = data.get("number_one")
-    y = data.get("number_two")
+    x = data.get("number_one", 0)
+    y = data.get("number_two", 0)
     return dumps({"is_sum_numbers": {
         "number_one": x,
         "number_two": y,
         "result_sum": x + y
+    }})
+
+@post('/division_two_nums')
+def divide_two_nums():
+    response.content_type = 'application/json'
+    data: dict = request.json
+    x = data.get("number_one", 0)
+    y = data.get("number_two", 0)
+    return dumps({"is_sum_numbers": {
+        "number_one": x,
+        "number_two": y,
+        "result_sum": x / y
+    }})
+
+
+@post('/multiply_two_nums')
+def divide_two_nums():
+    response.content_type = 'application/json'
+    data: dict = request.json
+    x = data.get("number_one", 0)
+    y = data.get("number_two", 0)
+    return dumps({"is_sum_numbers": {
+        "number_one": x,
+        "number_two": y,
+        "result_sum": x * y
     }})
 
 
