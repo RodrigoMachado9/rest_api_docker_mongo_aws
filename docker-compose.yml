@@ -7,3 +7,20 @@ services:
     build: ./web
     ports:
       - "8080:8080"
+    depends_on:
+      - mongo
+
+  mongo:
+    container_name: MongoDB
+    restart: always
+    image: mongo:3.0
+    environment:
+      MONGODB_USER: "mongo"
+      MONGODB_DATABASE: "mongo"
+      MONGODB_PASS: "mongo"
+    ports:
+      - "27017:27017"
+    command: --smallfiles --quiet --logpath=/dev/null
+
+
+
