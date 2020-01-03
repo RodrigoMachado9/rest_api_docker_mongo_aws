@@ -1,12 +1,25 @@
 from bottle import response, request, run, error, get, post
 from json import dumps
+from pymongo import MongoClient
 
+
+client = MongoClient("mongodb://mongo:27017")
+db = client.dockerDB
+user_num = db["user_num"]
+
+user_num.insert({
+    "num_of_users": 0
+})
 
 
 @get('/')
 def hello():
     status = response.status_code
-    return {"status": status, "message": "success"}
+    prev_num = user_num.find({})[0]["num_of_users"]
+    new_num = prev_num + 1
+    user_num.update({}, { "$set": {"num_of_users": new_num}})
+    return {"status": status,
+            "message": "Hello user number: %s" % new_num}
 
 @get('/hithere')
 def hi_there_everyone():
