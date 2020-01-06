@@ -9,9 +9,9 @@ client = MongoClient("mongodb://mongo:27017")
 
 db = client.dockerDB
 user_num = db["user_num"]     # instance of collections one
-# user_num.insert({
-#     "num_of_users": 0
-# })
+user_num.insert({
+    "num_of_users": 0
+})
 
 
 db = client.sentence_database
@@ -20,10 +20,6 @@ users = db["users"]     # instance of collections two
 
 @get('/')
 def hello():
-    user_num.insert({
-        "num_of_users": 0
-    })
-
     status = response.status_code
     prev_num = user_num.find({})[0]["num_of_users"]
     new_num = prev_num + 1
