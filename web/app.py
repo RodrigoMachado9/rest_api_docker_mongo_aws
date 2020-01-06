@@ -1,25 +1,104 @@
 from bottle import response, request, run, error, get, post
-from json import dumps
 from pymongo import MongoClient
+from passlib.hash import bcrypt
+from json import dumps
+# import bcrypt
 
-
+# instance of mongodb
 client = MongoClient("mongodb://mongo:27017")
-db = client.dockerDB
-user_num = db["user_num"]
 
-user_num.insert({
-    "num_of_users": 0
-})
+db = client.dockerDB
+user_num = db["user_num"]     # instance of collections one
+# user_num.insert({
+#     "num_of_users": 0
+# })
+
+
+db = client.sentence_database
+users = db["users"]     # instance of collections two
 
 
 @get('/')
 def hello():
+    user_num.insert({
+        "num_of_users": 0
+    })
+
     status = response.status_code
     prev_num = user_num.find({})[0]["num_of_users"]
     new_num = prev_num + 1
-    user_num.update({}, { "$set": {"num_of_users": new_num}})
+    user_num.update({}, {"$set": {"num_of_users": new_num}})
     return {"status": status,
             "message": "Hello user number: %s" % new_num}
+
+# http://www.mindrot.org/projects/py-bcrypt/
+# https://passlib.readthedocs.io/en/stable/lib/passlib.hash.bcrypt.html
+# pip install passlib
+
+@post('/register')
+def register():
+    status = response.status_code
+    posted_data = request.json
+
+    # get data
+    username = posted_data["username"]
+    password = posted_data["password"]
+    # hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())
+    hashed_password = bcrypt.hash(password)
+
+    users.insert({
+        "username": username,
+        "password": hashed_password,
+        "sentence": "",
+        "tokens": 6
+    })
+
+    if status == 200:
+        return {"status": status,
+                "message": "success"}
+    if status == 500:
+        return {"status": status,
+                "message": "server internal error"}
+    if status == 404:
+        return {"status": status,
+                "message": "error, page not found"}
+    return {"status": status,
+            "message": "unexpected error"}
+
+@post('/')
+def store():
+    posted_data = request.json
+
+    # read payload data
+    username = posted_data["username"]
+    password = posted_data["passworld"]
+    sentence = posted_data["sentence"]
+
+    # verify data (match)
+    correct_password = verify_login(username, password)
+    if not correct_password:
+        status = response.status_code = 302
+        return {"status": status, "message": "login is fail"}
+
+    num_tokens = count_tokens()
+    if num_tokens <= 0:
+        status = response.status_code = 301
+        return {"status": status, "message": "token is fail"}
+
+    users.update({
+        "username": username,
+    }, {"$set": {"sentence": sentence,
+                 "tokens": num_tokens}})
+
+    status = response.status_code = 200
+    return {"status": status, "message": "sentence save successfully!!"}
+
+
+def verify_login(username, password):
+    return True
+
+def count_tokens():
+    return 2
 
 @get('/hithere')
 def hi_there_everyone():
