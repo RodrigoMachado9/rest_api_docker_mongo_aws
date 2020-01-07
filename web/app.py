@@ -75,7 +75,7 @@ def store():
         status = response.status_code = 302
         return {"status": status, "message": "login is fail"}
 
-    num_tokens = count_tokens()
+    num_tokens = count_tokens(username)
     if num_tokens <= 0:
         status = response.status_code = 301
         return {"status": status, "message": "token is fail"}
