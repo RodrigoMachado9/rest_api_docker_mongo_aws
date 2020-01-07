@@ -17,7 +17,6 @@ user_num.insert({
 db = client.sentence_database
 users = db["users"]     # instance of collections two
 
-
 @get('/')
 def hello():
     status = response.status_code
