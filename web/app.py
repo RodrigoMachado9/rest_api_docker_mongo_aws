@@ -60,7 +60,7 @@ def register():
     return {"status": status,
             "message": "unexpected error"}
 
-@post('/')
+@post('/store')
 def store():
     posted_data = request.json
 
@@ -93,7 +93,7 @@ def verify_password(username, password):
     hashed_password = users.find({
         "username": username,
     })[0]["password"]
-    if bcrypt.verify("1234", hashed_password):
+    if bcrypt.verify(password, hashed_password):
         return True
     return False
 
