@@ -70,7 +70,7 @@ def store():
     sentence = posted_data["sentence"]
 
     # verify data (match)
-    correct_password = verify_login(username, password)
+    correct_password = verify_password(username, password)
     if not correct_password:
         status = response.status_code = 302
         return {"status": status, "message": "login is fail"}
@@ -89,11 +89,21 @@ def store():
     return {"status": status, "message": "sentence save successfully!!"}
 
 
-def verify_login(username, password):
-    return True
+def verify_password(username, password):
+    hashed_password = users.find({
+        "username": username,
+    })[0]["password"]
+    if bcrypt.verify("1234", hashed_password):
+        return True
+    return False
 
-def count_tokens():
-    return 2
+def count_tokens(username):
+    tokens = users.find({
+        "username": username
+    })[0]["tokens"]
+    if tokens:
+        return tokens
+    return None
 
 @get('/hithere')
 def hi_there_everyone():
