@@ -13,7 +13,6 @@ user_num.insert({
     "num_of_users": 0
 })
 
-
 db = client.sentence_database
 users = db["users"]     # instance of collections two
 
@@ -71,15 +70,16 @@ def store():
 
     # verify data (match)
     correct_password = verify_password(username, password)
+    print(correct_password, 'correct_password;')
     if not correct_password:
         status = response.status_code = 302
         return {"status": status, "message": "login is fail"}
 
     num_tokens = count_tokens(username)
-    if num_tokens <= 0:
-        status = response.status_code = 301
-        return {"status": status, "message": "token is fail"}
-
+    # if num_tokens <= 0:
+    #     status = response.status_code = 301
+    #     return {"status": status, "message": "token is fail"}
+    print(num_tokens, 'num_tokens;')
     users.update({
         "username": username,
     }, {"$set": {"sentence": sentence,
