@@ -2,7 +2,6 @@ from bottle import response, request, run, error, get, post
 from pymongo import MongoClient
 from passlib.hash import bcrypt
 from json import dumps
-# import bcrypt
 
 # instance of mongodb
 client = MongoClient("mongodb://mongo:27017")
@@ -70,16 +69,14 @@ def store():
 
     # verify data (match)
     correct_password = verify_password(username, password)
-    print(correct_password, 'correct_password;')
     if not correct_password:
         status = response.status_code = 302
         return {"status": status, "message": "login is fail"}
 
     num_tokens = count_tokens(username)
-    # if num_tokens <= 0:
-    #     status = response.status_code = 301
-    #     return {"status": status, "message": "token is fail"}
-    print(num_tokens, 'num_tokens;')
+    if num_tokens <= 0:
+        status = response.status_code = 301
+        return {"status": status, "message": "token is fail"}
     users.update({
         "username": username,
     }, {"$set": {"sentence": sentence,
