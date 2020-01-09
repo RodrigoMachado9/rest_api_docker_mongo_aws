@@ -2,6 +2,8 @@ from bottle import response, request, run, error, get, post
 from pymongo import MongoClient
 from passlib.hash import bcrypt
 from json import dumps
+import json
+
 
 # instance of mongodb
 client = MongoClient("mongodb://mongo:27017")
@@ -14,6 +16,7 @@ user_num.insert({
 
 db = client.sentence_database
 users = db["users"]     # instance of collections two
+
 
 @get('/')
 def hello():
@@ -30,6 +33,7 @@ def hello():
 
 @post('/register')
 def register():
+    api_key = request.params.get('api_key', request.headers.get('x-api-key'))
     status = response.status_code
     posted_data = request.json
 
@@ -39,12 +43,23 @@ def register():
     # hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())
     hashed_password = bcrypt.hash(password)
 
+    if api_key:
+        data_json = {
+            "username": username,
+            "password": hashed_password,
+            "sentence": "",
+            "tokens": 6
+        }
+        with open("teste", "w") as outfile:
+            json.dump(data_json, outfile)
+
     users.insert({
         "username": username,
         "password": hashed_password,
         "sentence": "",
         "tokens": 6
     })
+
 
     if status == 200:
         return {"status": status,
@@ -177,7 +192,6 @@ def error404(error):
 @error(500)
 def error500(error):
     return '<h1>You have experience a 404</h1>'
-
 
 
 if __name__ == '__main__':
