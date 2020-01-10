@@ -43,7 +43,7 @@ def register():
     # hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())
     hashed_password = bcrypt.hash(password)
 
-    if api_key:
+    if not api_key:
         data_json = {
             "username": username,
             "password": hashed_password,
@@ -88,7 +88,7 @@ def store():
         status = response.status_code = 302
         return {"status": status, "message": "login is fail"}
 
-    num_tokens = count_tokens(username)
+    num_tokens = get_token(username)
     if num_tokens <= 0:
         status = response.status_code = 301
         return {"status": status, "message": "token is fail"}
@@ -109,7 +109,7 @@ def verify_password(username, password):
         return True
     return False
 
-def count_tokens(username):
+def get_token(username):
     tokens = users.find({
         "username": username
     })[0]["tokens"]
