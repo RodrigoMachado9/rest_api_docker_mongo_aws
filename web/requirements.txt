@@ -2,3 +2,4 @@ bottle
 pymongo
 bcrypt
 passlib
+spacy

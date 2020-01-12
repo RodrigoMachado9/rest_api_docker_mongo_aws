@@ -53,6 +53,10 @@ def register():
         with open("teste", "w") as outfile:
             json.dump(data_json, outfile)
 
+    if user_exists(username):
+        return {"status": 500,
+                "message": "this document of user: %s exists..."}
+
     users.insert({
         "username": username,
         "password": hashed_password,
@@ -72,6 +76,13 @@ def register():
                 "message": "error, page not found"}
     return {"status": status,
             "message": "unexpected error"}
+
+def user_exists(username: str):
+    check_user = users.find({"username": username})
+    if check_user:
+        return True
+    return False
+
 
 @post('/store')
 def store():
