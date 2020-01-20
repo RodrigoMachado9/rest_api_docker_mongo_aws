@@ -71,25 +71,25 @@ class Register(BottleResource):
         })
         return self.status_generate(200, "you successfully signed up for the API !!!")
 
-    def status_generate(self, status: int, message: str):
+    def status_generate(self, status: int, message: str) -> dict:
         return {"status": status,
                 "message": message}
 
 
 class Store(BottleResource):
 
-    def verify_password(self, username, password):
+    def verify_password(self, username: str, password: str) -> bool:
         hashed_password = users.find({
             "username": username
         })[0]["password"]
         is_equal = True if bcrypt.verify(password, hashed_password) else False
         return is_equal
 
-    def count_tokens(self, username):
+    def count_tokens(self, username: str) -> int:
         tokens = users.find({"username": username})[0]["tokens"]
         return tokens
 
-    def status_generate(self, status: int, message: str = None):
+    def status_generate(self, status: int, message: str = None) -> dict:
         return {"status": status,
                 "message": message}
 
@@ -120,9 +120,58 @@ class Store(BottleResource):
         return self.status_generate(200, "store save successfully!!")
 
 
+class GetSentence(BottleResource):
+
+
+    def verify_password(self, username: str, password: str) -> bool:
+        hashed_password = users.find({
+            "username": username
+        })[0]["password"]
+        is_equal = True if bcrypt.verify(password, hashed_password) else False
+        return is_equal
+
+    def status_generate(self, status: int, message: str = None):
+        return {"status": status,
+                "message": message}
+
+    def count_tokens(self, username: str) -> int:
+        tokens = users.find({"username": username})[0]["tokens"]
+        return tokens
+
+    @api_get('/get')
+    def get(self):
+        posted_data = request.json
+        username = posted_data.get("username")
+        password = posted_data.get("password")
+
+        # verify math of password
+        correct_password = self.verify_password(username, password)
+        if not correct_password:
+            return self.status_generate(302)
+
+        number_tokens = self.count_tokens(username)
+        if number_tokens <= 0:
+            return self.status_generate(301)
+
+        # verify user has enough tokens
+        users.update({"username": username},
+                     {
+                         "$set": {
+                             "tokens": (number_tokens - 1)
+                         }})
+
+        sentence = users.find({
+            "username": username
+        })[0]["sentence"]
+
+        return self.status_generate(200, sentence)
+
+
+
 if __name__ == '__main__':
     app = Bottle()
     # app.install(DemoResource())
+    app.install(GetSentence())
     app.install(Register())
     app.install(Store())
     app.run(host="0.0.0.0", port=8080, debug=True, reload=True)
