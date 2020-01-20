@@ -1,209 +1,92 @@
+from bottle_resource import BottleResource, api, api_get, api_post, api_put, api_patch, api_delete
 from bottle import response, request, run, error, get, post
 from pymongo import MongoClient
 from passlib.hash import bcrypt
+from bottle import Bottle
+import json, subprocess
 from json import dumps
-import json
+
+
+# class DemoResource(BottleResource):
+#
+#     @api('/demos')
+#     def get_demo_list(self):
+#         return {'demos': [1, 2, 3, 4, 5]}
+#
+#     @api_get('/demos/<demo_id>')
+#     def get_demo_detail(self, demo_id):
+#         return {'name': 'demo', 'id': demo_id}
+#
+#     @api_post('/demos')
+#     def create_demo(self):
+#         return {'status': 'ok', 'msg': 'created success'}
+#
+#     @api_put('/demos/<demo_id>')
+#     def update_demo(self, demo_id):
+#         return {'status': 'ok', 'msg': 'updated success', 'id': demo_id}
+#
+#     @api_patch('/demos/<demo_id>')
+#     def patch_demo(self, demo_id):
+#         return {'status': 'ok', 'msg': 'patch success', 'id': demo_id}
+#
+#     @api_delete('/demos/<demo_id>')
+#     def delete_demo(self, demo_id):
+#         return {'status': 'ok', 'msg': 'delete success', 'id': demo_id}
 
 
 # instance of mongodb
-client = MongoClient("mongodb://mongo:27017")
+# client = MongoClient("mongodb://mongo:27017")
+# db = client.dockerDB
+# user_num = db["user_num"]     # instance of collections one
+# user_num.insert({
+#     "num_of_users": 0
+# })
+#
+# db = client.sentence_database
+# users = db["users"]     # instance of collections two
+#
+# db = client.image_recognition
+# users_recognition = db["users_recognition"]     # instance of collections two
 
-db = client.dockerDB
-user_num = db["user_num"]     # instance of collections one
-user_num.insert({
-    "num_of_users": 0
-})
-
-db = client.sentence_database
-users = db["users"]     # instance of collections two
-
-
-@get('/')
-def hello():
-    status = response.status_code
-    prev_num = user_num.find({})[0]["num_of_users"]
-    new_num = prev_num + 1
-    user_num.update({}, {"$set": {"num_of_users": new_num}})
-    return {"status": status,
-            "message": "Hello user number: %s" % new_num}
-
-# http://www.mindrot.org/projects/py-bcrypt/
 # https://passlib.readthedocs.io/en/stable/lib/passlib.hash.bcrypt.html
-# pip install passlib
 
-@post('/register')
-def register():
-    api_key = request.params.get('api_key', request.headers.get('x-api-key'))
-    status = response.status_code
-    posted_data = request.json
+class Register(BottleResource):
 
-    # get data
-    username = posted_data["username"]
-    password = posted_data["password"]
-    # hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())
-    hashed_password = bcrypt.hash(password)
-
-    if not api_key:
-        data_json = {
-            "username": username,
-            "password": hashed_password,
-            "sentence": "",
-            "tokens": 6
-        }
-        with open("teste", "w") as outfile:
-            json.dump(data_json, outfile)
-
-    if user_exists(username):
-        return {"status": 500,
-                "message": "this document of user: %s exists..."}
-
-    users.insert({
-        "username": username,
-        "password": hashed_password,
-        "sentence": "",
-        "tokens": 6
-    })
+    @api('/')
+    def __index__(self):
+        return self.status_generate(200, "be welcome!")
 
 
-    if status == 200:
+    @api_post("/register")
+    def register(self):
+        posted_data = request.json
+        # get of data's payload body
+        print(posted_data)
+        username = posted_data.get("username")
+        password = posted_data.get("password")
+
+        hashed_password = bcrypt.hash(password)
+        print(hashed_password)
+        # users.insert({
+        #     "username": username,
+        #     "password": hashed_password,
+        #     "sentence": ""
+        # })
+        return self.status_generate(200, "you successfully signed up for the API !!!")
+
+
+    def status_generate(self, status: int, message: str):
         return {"status": status,
-                "message": "success"}
-    if status == 500:
-        return {"status": status,
-                "message": "server internal error"}
-    if status == 404:
-        return {"status": status,
-                "message": "error, page not found"}
-    return {"status": status,
-            "message": "unexpected error"}
-
-def user_exists(username: str):
-    check_user = users.find({"username": username})
-    if check_user:
-        return True
-    return False
+                "message": message}
 
 
-@post('/store')
-def store():
-    posted_data = request.json
+class Store(BottleResource):
+    pass
 
-    # read payload data
-    username = posted_data["username"]
-    password = posted_data["passworld"]
-    sentence = posted_data["sentence"]
-
-    # verify data (match)
-    correct_password = verify_password(username, password)
-    if not correct_password:
-        status = response.status_code = 302
-        return {"status": status, "message": "login is fail"}
-
-    num_tokens = get_token(username)
-    if num_tokens <= 0:
-        status = response.status_code = 301
-        return {"status": status, "message": "token is fail"}
-    users.update({
-        "username": username,
-    }, {"$set": {"sentence": sentence,
-                 "tokens": num_tokens}})
-
-    status = response.status_code = 200
-    return {"status": status, "message": "sentence save successfully!!"}
-
-
-def verify_password(username, password):
-    hashed_password = users.find({
-        "username": username,
-    })[0]["password"]
-    if bcrypt.verify(password, hashed_password):
-        return True
-    return False
-
-def get_token(username):
-    tokens = users.find({
-        "username": username
-    })[0]["tokens"]
-    if tokens:
-        return tokens
-    return None
-
-@get('/hithere')
-def hi_there_everyone():
-    return "I just hit /hithere"
-
-@get('/consult')
-def bye():
-    # prepare a response for the request that came to /bye
-    c = 2*534
-    s = str(c)
-    data = {
-        "status": str(response.status_code),
-        "message": "the result operation is: %s " % s,
-        "phones": [
-            {
-                "phoneName": "my-iphone",
-                "phoneNumber": "11952841555",
-                "isActivated": None
-            },
-            {
-                "phoneName": "my-android",
-                "phoneNumber": "11952841555",
-                "isActivated": None
-            }
-
-        ]
-    }
-    response.content_type = 'application/json'
-    return dumps(data)
-
-@post('/sum_two_nums')
-def sum_two_nums():
-    response.content_type = 'application/json'
-    data: dict = request.json
-    x = data.get("number_one", 0)
-    y = data.get("number_two", 0)
-    return dumps({"is_sum_numbers": {
-        "number_one": x,
-        "number_two": y,
-        "result_sum": x + y
-    }})
-
-@post('/division_two_nums')
-def divide_two_nums():
-    response.content_type = 'application/json'
-    data: dict = request.json
-    x = data.get("number_one", 0)
-    y = data.get("number_two", 0)
-    return dumps({"is_sum_numbers": {
-        "number_one": x,
-        "number_two": y,
-        "result_sum": x / y
-    }})
-
-
-@post('/multiply_two_nums')
-def divide_two_nums():
-    response.content_type = 'application/json'
-    data: dict = request.json
-    x = data.get("number_one", 0)
-    y = data.get("number_two", 0)
-    return dumps({"is_sum_numbers": {
-        "number_one": x,
-        "number_two": y,
-        "result_sum": x * y
-    }})
-
-
-@error(404)
-def error404(error):
-    return '<h1>You have experience a 404</h1>'
-
-
-@error(500)
-def error500(error):
-    return '<h1>You have experience a 404</h1>'
 
 
 if __name__ == '__main__':
-    run(host="0.0.0.0", port=8080, debug=True, reload=True)
+    app = Bottle()
+    # app.install(DemoResource())
+    app.install(Register())
+    app.run(host="0.0.0.0", port=8080, debug=True, reload=True)

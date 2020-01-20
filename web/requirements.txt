@@ -3,3 +3,7 @@ pymongo
 bcrypt
 passlib
 spacy
+numpy
+tensorflow
+requests
+BottleResource
