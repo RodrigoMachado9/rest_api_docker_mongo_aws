@@ -151,7 +151,7 @@ class GetSentence(BottleResource):
 
         number_tokens = self.count_tokens(username)
         if number_tokens <= 0:
-            return self.status_generate(301)
+            return self.status_generate(301, "the token limit has been exceeded!")
 
         # verify user has enough tokens
         users.update({"username": username},
