@@ -48,6 +48,9 @@ db = client.image_recognition
 users_recognition = db["users_recognition"]  # instance of collections two
 
 
+db = client.similarity_db
+users_similarity = db["users_similarity"]  # instance of collections two
+
 # https://passlib.readthedocs.io/en/stable/lib/passlib.hash.bcrypt.html
 class Register(BottleResource):
 
@@ -167,6 +170,37 @@ class GetSentence(BottleResource):
         return self.status_generate(200, sentence)
 
 
+class Similarity(BottleResource):
+
+    # https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.0.0/en_core_web_sm-2.0.0.tar.gz
+    def status_generate(self, status: int, message: str) -> dict:
+        return {"status": status, "message": message}
+
+    def user_exists(self, username):
+        is_user = users_similarity.find({"username": username}).count()
+        return False if (is_user == 0) else True
+
+    @api_post('/')
+    def register(self):
+        posted_data = request.json
+        username = posted_data["username"]
+        password = posted_data["password"]
+        if self.user_exists(username):
+            return self.status_generate(301, "invalid username")
+
+        hashed_password = bcrypt.hash(password)
+        users_similarity.insert({
+            "username": username,
+            "password": hashed_password,
+            "tokens": 6
+        })
+        return self.status_generate(200, "you've successfully signed up to the API")
+
+
+class Detect(BottleResource):
+    pass
+
+
 
 if __name__ == '__main__':
     app = Bottle()
@@ -174,4 +208,5 @@ if __name__ == '__main__':
     app.install(GetSentence())
     app.install(Register())
     app.install(Store())
+    app.install(Similarity())
     app.run(host="0.0.0.0", port=8080, debug=True, reload=True)
