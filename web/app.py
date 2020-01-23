@@ -196,7 +196,6 @@ class Similarity(BottleResource):
         })
         return self.status_generate(200, "you've successfully signed up to the API")
 
-
 class Detect(BottleResource):
 
     def status_generate(self, status: int, message: str, similarity: str = None) -> dict:
@@ -206,11 +205,25 @@ class Detect(BottleResource):
         is_user = users_similarity.find({"username": username}).count()
         return False if (is_user == 0) else True
 
-    def verify_password(self, username: str, password: str) -> dict:
-        pass
+    def verify_password(self, username: str, password: str) -> bool:
+        is_user = self.user_exists(username)
+        if not is_user:
+            return False
+        # if user exists then -> check password integrity
+        hashed_password = users_similarity.find({
+            "username": username})[0]["password"]
+        is_equal = bcrypt.verify(password, hashed_password)
+        if is_equal:
+            return True
+        return False
 
     def count_tokens(self, username: str) -> int:
-        pass
+        tokens = users_similarity.find({
+            "username": username
+        })[0]["tokens"]
+        return tokens
+
+
 
     @api_post('')
     def post(self):
@@ -258,4 +271,5 @@ if __name__ == '__main__':
     app.install(Register())
     app.install(Store())
     app.install(Similarity())
+    app.install(Detect())
     app.run(host="0.0.0.0", port=8080, debug=True, reload=True)
