@@ -3,8 +3,8 @@ from bottle import response, request, run, error, get, post
 from pymongo import MongoClient
 from passlib.hash import bcrypt
 from bottle import Bottle
-import json, subprocess, spacy
-from json import dumps
+import spacy
+
 
 # class DemoResource(BottleResource):
 #
@@ -180,8 +180,8 @@ class Similarity(BottleResource):
         is_user = users_similarity.find({"username": username}).count()
         return False if (is_user == 0) else True
 
-    @api_post('/register')
-    def register(self):
+    @api_post('/register_similarity')
+    def register_similarity(self):
         posted_data = request.json
         username = posted_data["username"]
         password = posted_data["password"]
@@ -251,6 +251,7 @@ class Detect(BottleResource):
         text1 = nlp(text1)
         text2 = nlp(text2)
 
+
         # ratio is a number between 0 and 1 the closer to 1, the more similar text and text2
         ratio = text1.similarity(text2)
         current_tokens = self.count_tokens(username)
@@ -297,7 +298,6 @@ class Refill(BottleResource):
         }})
 
         return self.status_generate(200, "refill successfully!!")
-
 
 
 
