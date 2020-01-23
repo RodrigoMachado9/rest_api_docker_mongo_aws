@@ -3,7 +3,7 @@ from bottle import response, request, run, error, get, post
 from pymongo import MongoClient
 from passlib.hash import bcrypt
 from bottle import Bottle
-import json, subprocess
+import json, subprocess, spacy
 from json import dumps
 
 # class DemoResource(BottleResource):
@@ -198,7 +198,56 @@ class Similarity(BottleResource):
 
 
 class Detect(BottleResource):
-    pass
+
+    def status_generate(self, status: int, message: str, similarity: str = None) -> dict:
+        return {"status": status, "similarity": similarity, "message": message}
+
+    def user_exists(self, username: str) -> bool:
+        is_user = users_similarity.find({"username": username}).count()
+        return False if (is_user == 0) else True
+
+    def verify_password(self, username: str, password: str) -> dict:
+        pass
+
+    def count_tokens(self, username: str) -> int:
+        pass
+
+    @api_post('')
+    def post(self):
+        posted_data = request.json
+        username = posted_data["username"]
+        password = posted_data["password"]
+        text1 = posted_data["text1"]
+        text2 = posted_data["text2"]
+
+        is_user = self.user_exists(username)
+        if not is_user:
+            return self.status_generate(301, "invalid username")
+
+        correct_password = self.verify_password(username, password)
+
+        if not correct_password:
+            return self.status_generate(302, "invalid password")
+
+        num_tokens = self.count_tokens(username)
+
+        if num_tokens <= 0:
+            return self.status_generate(303,  "you're tokens, please refill ! ")
+
+        # calculate of distance ...
+        nlp = spacy.load('en_core_web_sm')
+        text1 = nlp(text1)
+        text2 = nlp(text2)
+
+        # ratio is a number between 0 and 1 the closer to 1, the more similar text and text2
+        ratio = text1.similarity(text2)
+        current_tokens = self.count_tokens(username)
+        users_similarity.update({"username": username},
+                                 {"$set": {
+                                     "tokens": current_tokens - 1
+                                 }})
+
+        return self.status_generate(200,  "similarity score calculated successfully",  ratio)
 
 
 
