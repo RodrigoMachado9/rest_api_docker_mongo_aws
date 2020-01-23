@@ -123,7 +123,7 @@ class Store(BottleResource):
         return self.status_generate(200, "store save successfully!!")
 
 
-class GetSentence(BottleResource):
+class Sentence(BottleResource):
 
 
     def verify_password(self, username: str, password: str) -> bool:
@@ -141,8 +141,8 @@ class GetSentence(BottleResource):
         tokens = users.find({"username": username})[0]["tokens"]
         return tokens
 
-    @api_get('/get')
-    def get(self):
+    @api_get('/sentence')
+    def sentence(self):
         posted_data = request.json
         username = posted_data.get("username")
         password = posted_data.get("password")
@@ -180,7 +180,7 @@ class Similarity(BottleResource):
         is_user = users_similarity.find({"username": username}).count()
         return False if (is_user == 0) else True
 
-    @api_post('/')
+    @api_post('/register')
     def register(self):
         posted_data = request.json
         username = posted_data["username"]
@@ -224,9 +224,8 @@ class Detect(BottleResource):
         return tokens
 
 
-
-    @api_post('')
-    def post(self):
+    @api_post('/detect')
+    def detect(self):
         posted_data = request.json
         username = posted_data["username"]
         password = posted_data["password"]
@@ -263,13 +262,52 @@ class Detect(BottleResource):
         return self.status_generate(200,  "similarity score calculated successfully",  ratio)
 
 
+class Refill(BottleResource):
+
+    def status_generate(self, status: int, message: str, similarity: str = None) -> dict:
+        return {"status": status, "similarity": similarity, "message": message}
+
+    def user_exists(self, username: str) -> bool:
+        pass
+
+    def count_tokens(self,  username: str):
+        pass
+
+    @api_post('/refill')
+    def refill(self):
+        posted_data = request.json
+
+        username = posted_data["username"]
+        password = posted_data["admin_password"]
+        refill_amount = posted_data["refill"]
+
+        is_user = self.user_exists(username)
+        if not is_user:
+            return self.status_generate(301, "invalid username!!")
+
+        # todo >>> build collection to manage administrators ..
+        correct_password = "helloworld@123"
+        if not password == correct_password:
+            return self.status_generate(304, "invalid admin password !!")
+
+        users_similarity.update({
+            "username": username
+        }, {"$set": {
+            "tokens": refill_amount
+        }})
+
+        return self.status_generate(200, "refill successfully!!")
+
+
+
 
 if __name__ == '__main__':
     app = Bottle()
     # app.install(DemoResource())
-    app.install(GetSentence())
     app.install(Register())
+    app.install(Sentence())
     app.install(Store())
     app.install(Similarity())
     app.install(Detect())
+    app.install(Refill())
     app.run(host="0.0.0.0", port=8080, debug=True, reload=True)
