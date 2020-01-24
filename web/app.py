@@ -6,33 +6,6 @@ from bottle import Bottle
 import spacy
 
 
-# class DemoResource(BottleResource):
-#
-#     @api('/demos')
-#     def get_demo_list(self):
-#         return {'demos': [1, 2, 3, 4, 5]}
-#
-#     @api_get('/demos/<demo_id>')
-#     def get_demo_detail(self, demo_id):
-#         return {'name': 'demo', 'id': demo_id}
-#
-#     @api_post('/demos')
-#     def create_demo(self):
-#         return {'status': 'ok', 'msg': 'created success'}
-#
-#     @api_put('/demos/<demo_id>')
-#     def update_demo(self, demo_id):
-#         return {'status': 'ok', 'msg': 'updated success', 'id': demo_id}
-#
-#     @api_patch('/demos/<demo_id>')
-#     def patch_demo(self, demo_id):
-#         return {'status': 'ok', 'msg': 'patch success', 'id': demo_id}
-#
-#     @api_delete('/demos/<demo_id>')
-#     def delete_demo(self, demo_id):
-#         return {'status': 'ok', 'msg': 'delete success', 'id': demo_id}
-
-
 # instance of mongodb
 client = MongoClient("mongodb://mongo:27017")
 db = client.dockerDB
