@@ -7,3 +7,8 @@ numpy
 tensorflow
 requests
 BottleResource
+requests
+subprocess
+json
+uuid
+datetime

@@ -4,6 +4,8 @@ from pymongo import MongoClient
 from passlib.hash import bcrypt
 from bottle import Bottle
 import spacy
+import requests, subprocess, json, uuid, datetime
+
 
 
 # instance of mongodb
@@ -17,12 +19,12 @@ user_num.insert({
 db = client.sentence_database
 users = db["users"]  # instance of collections two
 
+db = client.similarity_db
+users_similarity = db["users_similarity"]  # instance of collections two
+
 db = client.image_recognition
 users_recognition = db["users_recognition"]  # instance of collections two
 
-
-db = client.similarity_db
-users_similarity = db["users_similarity"]  # instance of collections two
 
 # https://passlib.readthedocs.io/en/stable/lib/passlib.hash.bcrypt.html
 class Register(BottleResource):
@@ -278,6 +280,39 @@ class Refill(BottleResource):
         return self.status_generate(200, "refill successfully!!")
 
 
+class RegisterImageRecognition(BottleResource):
+
+    def status_generate(self, status: int, message: str, similarity: str = None) -> dict:
+        return {"status": status, "similarity": similarity, "message": message}
+
+    def user_exists(self, username: str) -> bool:
+        is_user = users_recognition.find({"username": username}).count()
+        return False if (is_user == 0) else True
+
+    @api_post('/register_image_recognition')
+    def post(self):
+        posted_data = request.json
+
+        username = posted_data["username"]
+        password = posted_data["password"]
+
+        is_user_exists = self.user_exists(username)
+        if is_user_exists:
+            return self.status_generate(301,  "this user exists in the database !!")
+
+        hashed_pasword = bcrypt.hash(password)
+        users_recognition.insert({"username": username,
+                                  "password": hashed_pasword,
+                                  "tokens": 5,
+                                  "uuid": uuid.uuid4(),
+                                  "created_at": datetime.datetime.now()})
+
+        return self.status_generate(200,  "you successfully signed up !!")
+
+
+
+
+
 
 if __name__ == '__main__':
     app = Bottle()
@@ -288,4 +323,5 @@ if __name__ == '__main__':
     app.install(Similarity())
     app.install(Detect())
     app.install(Refill())
+    app.install(RegisterImageRecognition())
     app.run(host="0.0.0.0", port=8080, debug=True, reload=True)
