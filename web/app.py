@@ -292,7 +292,8 @@ class Refill(BottleResource):
 
         # todo >>> build collection to manage administrators ..
         correct_password = "helloworld@123"
-        if not password == correct_password:
+        is_correct_password =  True if (correct_password == password) else False
+        if not is_correct_password:
             return self.status_generate(304, "invalid admin password !!")
 
         users_similarity.update({
