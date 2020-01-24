@@ -310,6 +310,43 @@ class RegisterImageRecognition(BottleResource):
         return self.status_generate(200,  "you successfully signed up !!")
 
 
+class Classify(BottleResource):
+
+    def status_generate(self, status: int, message: str, recognition: str = None) -> dict:
+        return {"status": status, "recognition": recognition, "message": message}
+
+    def verify_credentials(self, username: str, password: str):
+        res = ""
+        error = ""
+
+        return res, error
+
+    @api_post('/classify')
+    def post(self):
+        posted_data = request.json
+        username = posted_data["username"]
+        password = posted_data["password"]
+        url = posted_data["url"]
+
+
+        # todo >>>
+        res, errors = self.verify_credentials(username, password)
+        if errors:
+            return res
+
+        number_tokens = users_recognition.find({"username": username})[0]["tokens"]
+        if number_tokens <= 0:
+            return self.status_generate(303, "not enougth tokens!")
+
+        r = requests.get(url)
+
+
+
+
+
+
+
+
 
 
 
