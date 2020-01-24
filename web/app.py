@@ -269,10 +269,14 @@ class Refill(BottleResource):
         return {"status": status, "similarity": similarity, "message": message}
 
     def user_exists(self, username: str) -> bool:
-        pass
+        is_user = users_similarity.find({"username": username}).count()
+        return False if (is_user == 0) else True
 
-    def count_tokens(self,  username: str):
-        pass
+    def count_tokens(self, username: str) -> int:
+        tokens = users_similarity.find({
+            "username": username
+        })[0]["tokens"]
+        return tokens
 
     @api_post('/refill')
     def refill(self):
