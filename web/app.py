@@ -282,8 +282,8 @@ class Refill(BottleResource):
 
 class RegisterImageRecognition(BottleResource):
 
-    def status_generate(self, status: int, message: str, similarity: str = None) -> dict:
-        return {"status": status, "similarity": similarity, "message": message}
+    def status_generate(self, status: int, message: str, recognition: str = None) -> dict:
+        return {"status": status, "recognition": recognition, "message": message}
 
     def user_exists(self, username: str) -> bool:
         is_user = users_recognition.find({"username": username}).count()
@@ -300,7 +300,7 @@ class RegisterImageRecognition(BottleResource):
         if is_user_exists:
             return self.status_generate(301,  "this user exists in the database !!")
 
-        hashed_pasword = bcrypt.hash(password)
+        hashed_pasword = bcrypt.       hash(password)
         users_recognition.insert({"username": username,
                                   "password": hashed_pasword,
                                   "tokens": 5,
@@ -316,7 +316,6 @@ class RegisterImageRecognition(BottleResource):
 
 if __name__ == '__main__':
     app = Bottle()
-    # app.install(DemoResource())
     app.install(Register())
     app.install(Sentence())
     app.install(Store())
