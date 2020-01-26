@@ -315,24 +315,35 @@ class Classify(BottleResource):
     def status_generate(self, status: int, message: str, recognition: str = None) -> dict:
         return {"status": status, "recognition": recognition, "message": message}
 
-    def verify_credentials(self, username: str, password: str):
-        res = ""
-        error = ""
+    def user_exists(self, username: str):
+        is_user = users_recognition.find({"username": username})
+        return True if is_user else False
 
-        return res, error
+    def verify_password(self, username: str, password: str):
+        database_password = users_recognition.find({"username": username})[0]["password"]
+        is_password = bcrypt.verify(database_password, password)
+        return True if is_password else False
+
+    # todo >>>
+    def verify_credentials(self, username: str, password: str):
+        if not self.user_exists(username):
+            return self.status_generate(301, "user not exists in database .... "), True
+
+        correct_password = self.verify_password(username, password)
+
+
 
     @api_post('/classify')
-    def post(self):
+    def classify(self):
         posted_data = request.json
         username = posted_data["username"]
         password = posted_data["password"]
         url = posted_data["url"]
 
-
         # todo >>>
-        res, errors = self.verify_credentials(username, password)
+        response_message, errors = self.verify_credentials(username, password)
         if errors:
-            return res
+            return response_message
 
         number_tokens = users_recognition.find({"username": username})[0]["tokens"]
         if number_tokens <= 0:
@@ -340,10 +351,20 @@ class Classify(BottleResource):
 
         r = requests.get(url)
 
+        with open("temp.jpg", "wb") as f:
+            f.write(r.content)
+            proc = subprocess.Popen("python classify_image.py --model_dir=. --image_file=./temp.jpg")
+            proc.communicate()[0]
+            proc.wait()
+
+            with open("text.txt") as g:
+                res = json.load(g)
+        users_recognition.update({"username": username}, {"$set": {
+            "tokens": number_tokens - 1
+        }})
 
 
-
-
+        return self.status_generate(200, res)
 
 
 
