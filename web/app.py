@@ -27,6 +27,8 @@ users_recognition = db["users_recognition"]  # instance of collections two
 
 
 # https://passlib.readthedocs.io/en/stable/lib/passlib.hash.bcrypt.html
+
+
 class Register(BottleResource):
 
     @api('/')
@@ -277,7 +279,7 @@ class Refill(BottleResource):
             "tokens": refill_amount
         }})
 
-        return self.status_generate(200, "refill successfully!!")
+        return self.status_generate(200, "refilled successfully!!")
 
 
 class RegisterImageRecognition(BottleResource):
@@ -300,7 +302,7 @@ class RegisterImageRecognition(BottleResource):
         if is_user_exists:
             return self.status_generate(301,  "this user exists in the database !!")
 
-        hashed_pasword = bcrypt.       hash(password)
+        hashed_pasword = bcrypt.hash(password)
         users_recognition.insert({"username": username,
                                   "password": hashed_pasword,
                                   "tokens": 5,
@@ -316,20 +318,24 @@ class Classify(BottleResource):
         return {"status": status, "recognition": recognition, "message": message}
 
     def user_exists(self, username: str):
-        is_user = users_recognition.find({"username": username})
-        return True if is_user else False
+        is_user = users_recognition.find({"username": username}).count()
+        return True if is_user > 0 else False
 
     def verify_password(self, username: str, password: str):
-        database_password = users_recognition.find({"username": username})[0]["password"]
-        is_password = bcrypt.verify(database_password, password)
+        hashed_password = users_recognition.find({"username": username})[0]["password"]
+        is_password = bcrypt.verify(password, hashed_password)
         return True if is_password else False
 
-    # todo >>>
+    # todo >>> check's >>> user and correct password ;
     def verify_credentials(self, username: str, password: str):
         if not self.user_exists(username):
             return self.status_generate(301, "user not exists in database .... "), True
 
         correct_password = self.verify_password(username, password)
+        if not correct_password:
+            self.status_generate(302,  "Invalid password ... ")
+
+        return None, False
 
 
 
@@ -351,20 +357,25 @@ class Classify(BottleResource):
 
         r = requests.get(url)
 
-        with open("temp.jpg", "wb") as f:
+        with open('/usr/src/app/temp.jpg', 'wb') as f:
             f.write(r.content)
-            proc = subprocess.Popen("python classify_image.py --model_dir=. --image_file=./temp.jpg")
-            proc.communicate()[0]
+            # proc = subprocess.Popen('python classify_image.py --model_dir=. --image_file=./temp.jpg', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+            proc = subprocess.Popen('python classify_image.py --model_dir=/usr/src/app/ --image_file=/usr/src/app/temp.jpg', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+            ret = proc.communicate()[0]
             proc.wait()
 
-            with open("text.txt") as g:
-                res = json.load(g)
+            with open("/usr/src/app/text.txt") as f:
+                ret_json = json.load(f)
+
+
+
         users_recognition.update({"username": username}, {"$set": {
             "tokens": number_tokens - 1
         }})
 
 
-        return self.status_generate(200, res)
+
+        return self.status_generate(200, ret_json)
 
 
 
@@ -379,6 +390,7 @@ if __name__ == '__main__':
     app.install(Store())
     app.install(Similarity())
     app.install(Detect())
-    app.install(Refill())
     app.install(RegisterImageRecognition())
+    app.install(Refill())
+    app.install(Classify())
     app.run(host="0.0.0.0", port=8080, debug=True, reload=True)

@@ -32,14 +32,13 @@ from __future__ import print_function
 
 import argparse
 import os.path
-import re
+import re, json
 import sys
 import tarfile
 
 import numpy as np
 from six.moves import urllib
 import tensorflow as tf
-import json
 
 FLAGS = None
 
@@ -153,15 +152,16 @@ def run_inference_on_image(image):
     node_lookup = NodeLookup()
 
     top_k = predictions.argsort()[-FLAGS.num_top_predictions:][::-1]
-    retJson = {}
+    return_json = {}
+
     for node_id in top_k:
       human_string = node_lookup.id_to_string(node_id)
       score = predictions[node_id]
-      retJson[human_string]=score.item()
+      return_json[human_string] = score
       print('%s (score = %.5f)' % (human_string, score))
-    print(retJson)
-    with open("text.txt", 'w') as f:
-        json.dump(retJson, f)
+    with open("/usr/src/app/text.txt") as f:
+      json.dump(return_json, f)
+
 
 
 def maybe_download_and_extract():
@@ -221,4 +221,4 @@ if __name__ == '__main__':
       help='Display this many predictions.'
   )
   FLAGS, unparsed = parser.parse_known_args()
-tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+  tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
