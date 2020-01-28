@@ -364,9 +364,8 @@ class Classify(BottleResource):
             ret = proc.communicate()[0]
             proc.wait()
 
-            with open("/usr/src/app/text.txt") as f:
+            with open("/usr/src/app/text") as f:
                 ret_json = json.load(f)
-
 
 
         users_recognition.update({"username": username}, {"$set": {
@@ -376,6 +375,7 @@ class Classify(BottleResource):
 
 
         return self.status_generate(200, ret_json)
+
 
 
 
