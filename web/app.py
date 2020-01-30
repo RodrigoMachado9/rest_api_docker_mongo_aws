@@ -338,7 +338,6 @@ class Classify(BottleResource):
         return None, False
 
 
-
     @api_post('/classify')
     def classify(self):
         posted_data = request.json
