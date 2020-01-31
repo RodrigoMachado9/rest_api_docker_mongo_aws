@@ -26,6 +26,10 @@ db = client.image_recognition
 users_recognition = db["users_recognition"]  # instance of collections two
 
 
+
+db  = client.database_banking_api
+users_banking = db["users_banking_banking_api"]
+
 # https://passlib.readthedocs.io/en/stable/lib/passlib.hash.bcrypt.html
 
 
