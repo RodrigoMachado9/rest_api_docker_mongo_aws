@@ -427,7 +427,7 @@ class RegisterBanking(BottleResource):
         users_banking.insert({"username": username, "password": hashed_password, "own": 0,  "debt": 0})
         return self.status_generate(200,  "you successfully signed up for api >>> banking_api")
 
-class Add(BottleResource):
+class AddBanking(BottleResource):
     def update_account(self, username: str, balance):
         users_banking.update({"username": username}, {"$set": {"own": balance}})
 
@@ -486,10 +486,79 @@ class Add(BottleResource):
         self.update_account(username, cash+money)
         return self.status_generate(200, "amount added successfully to account")
 
+class TransferBanking(BottleResource):
+
+    def update_account(self, username: str, balance):
+        users_banking.update({"username": username}, {"$set": {"own": balance}})
+
+    def update_debt(self, username, balance):
+        users_banking.update({"username": username}, {"$set": {"debt": balance}})
+
+    def cash_with_user(self, username: str):
+        cash = users_banking.find({"username": username})[0]["own"]
+        return cash
+
+    def verify_password(self, username: str, password: str):
+        if password and username:
+            hashed_password = users_banking.find({"username": username})[0]["password"]
+            match_password = bcrypt.verify(password, hashed_password)
+            return True if match_password else False
+        return False
+
+    def status_generate(self, status: int, message: str, recognition: str = None) -> [dict]:
+        return {"status": status, "recognition": recognition, "message": message}
+
+    def user_exist(self, username: str) -> bool:
+        if username:
+            is_user = users_banking.find({"username": username}).count()
+            return False if (is_user == 0) else True
+        return False
+
+    def verify_credentials(self, username: str, password: str) -> [str, bool]:
+        is_credentials = self.user_exist(username)
+        message = "invalid username"
+        if not is_credentials:
+            return self.status_generate(301, message), True
+        correct_password = self.verify_password(username, password)
+        if not correct_password:
+            return self.status_generate(302,  "incorrect password"), True
+        return None, False
 
 
+    @api_post("/")
+    def post(self):
+        posted_data = request.json
+        username = posted_data["username"]
+        password = posted_data["password"]
+        to = posted_data["to"]
+        money = posted_data["money"]
+
+        res_json, error = self.verify_credentials(username, password)
+
+        if error:
+            return res_json
+
+        cash = self.cash_with_user(username)
+        if cash <= 0:
+            return self.status_generate(304, "you're out money, please add or take a loan ")
+
+        # todo >>> to review
+        if not self.user_exist(to):
+            return self.status_generate(301, "reciever username is invalid")
+
+        cash_from = self.cash_with_user(username)
+        cash_to = self.cash_with_user(to)
+        bank_cash = self.cash_with_user("BANK")
 
 
+        self.update_account("BANK", bank_cash + 1)
+        self.update_account(to, (cash_to + money) - 1)
+        self.update_account(username, (cash_from - money))
+
+        return self.status_generate(200, "cash transfered successfuly")
+
+class BalanceBanking(BottleResource):
+    pass
 
 
 
@@ -504,5 +573,7 @@ if __name__ == '__main__':
     app.install(Refill())
     app.install(Classify())
     app.install(RegisterBanking())
-    app.install(Add())
+    app.install(AddBanking())
+    app.install(TransferBanking())
+    app.install(BalanceBanking())
     app.run(host="0.0.0.0", port=8080, debug=True, reload=True)
