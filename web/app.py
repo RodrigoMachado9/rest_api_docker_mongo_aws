@@ -388,6 +388,7 @@ def verify_credentials(username: str, password: str) -> [str, bool]:
     return None, False
 
 
+# todo, +-----------+
 def verify_password(username: str, password: str):
     if password and username:
         hashed_password = users_banking.find({"username": username})[0]["password"]
@@ -584,7 +585,7 @@ class BalanceBanking(BottleResource):
         if error:
             return res_json
 
-        res_json = users_banking.find({"username": username}, {"password": password, "_id": 0})[0]
+        res_json = users_banking.find({"username": username})
         return res_json
 
 class TakeLoanBanking(BottleResource):
