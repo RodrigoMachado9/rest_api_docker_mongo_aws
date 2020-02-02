@@ -560,16 +560,16 @@ class TransferBanking(BottleResource):
             return self.status_generate(304, "you're out money, please add or take a loan ")
 
         # todo >>> to review
-        if not self.user_exist(to):
-            return self.status_generate(301, "reciever username is invalid")
+        # if not self.user_exist(username):
+        #     return self.status_generate(301, "reciever username is invalid")
 
         cash_from = self.cash_with_user(username)
-        cash_to = self.cash_with_user(to)
+        # cash_to = self.cash_with_user(to)
         bank_cash = self.cash_with_user("BANK")
 
 
         self.update_account("BANK", bank_cash + 1)
-        self.update_account(to, (cash_to + money) - 1)
+        # self.update_account(to, (cash_to + money) - 1)
         self.update_account(username, (cash_from - money))
 
         return self.status_generate(200, "cash transfered successfuly")
@@ -585,8 +585,8 @@ class BalanceBanking(BottleResource):
         if error:
             return res_json
 
-        res_json = users_banking.find({"username": username})
-        return res_json
+        res_json = users_banking.find({"username": username}, {"password": password, "_id": 0})[0]
+        return status_generate(200, res_json)
 
 class TakeLoanBanking(BottleResource):
 
