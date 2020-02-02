@@ -382,6 +382,37 @@ class Classify(BottleResource):
 
 
 
+class RegisterBanking(BottleResource):
+
+    def status_generate(self, status: int, message: str, recognition: str = None) -> dict:
+        return {"status": status, "recognition": recognition, "message": message}
+
+    def user_exist(self, username: str) -> bool:
+        if username:
+            is_user = users_banking.find({"username": username}).count()
+            return False if (is_user == 0) else True
+        return False
+
+    def verify_password(self, username: str, password: str) -> bool:
+        if password and username:
+            hashed_password = users_banking.find({"username": username})[0]["password"]
+            match_password = bcrypt.verify(password, hashed_password)
+            return True if match_password else False
+        return False
+
+
+    @api_post("/banking_register")
+    def register(self):
+        posted_data = request.json
+        username = posted_data["username"]
+        password = posted_data["password"]
+
+        if self.user_exist(username):
+            return self.status_generate(301, "invalid username")
+
+        hashed_password = bcrypt.hash(password)
+        users_banking.insert({"username": username, "password": hashed_password, "own": 0,  "debt": 0})
+        return self.status_generate(200,  "you successfully signed up for api >>> banking_api")
 
 
 
@@ -396,4 +427,5 @@ if __name__ == '__main__':
     app.install(RegisterImageRecognition())
     app.install(Refill())
     app.install(Classify())
+    app.install(RegisterBanking())
     app.run(host="0.0.0.0", port=8080, debug=True, reload=True)
