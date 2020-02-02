@@ -6,8 +6,6 @@ from bottle import Bottle
 import spacy
 import requests, subprocess, json, uuid, datetime
 
-
-
 # instance of mongodb
 client = MongoClient("mongodb://mongo:27017")
 db = client.dockerDB
@@ -370,16 +368,11 @@ class Classify(BottleResource):
             with open("/usr/src/app/text") as f:
                 ret_json = json.load(f)
 
-
         users_recognition.update({"username": username}, {"$set": {
             "tokens": number_tokens - 1
         }})
 
-
-
         return self.status_generate(200, ret_json)
-
-
 
 
 class RegisterBanking(BottleResource):
@@ -414,7 +407,7 @@ class RegisterBanking(BottleResource):
     # def update_debt(self, username, balance):
     #     users_banking.update({"username": username}, {"$set": {"debt": balance}})
 
-    @api_post("/banking_register")
+    @api_post("/register_banking")
     def register(self):
         posted_data = request.json
         username = posted_data["username"]
@@ -525,7 +518,7 @@ class TransferBanking(BottleResource):
         return None, False
 
 
-    @api_post("/")
+    @api_post("/transfer_banking")
     def post(self):
         posted_data = request.json
         username = posted_data["username"]
@@ -558,7 +551,9 @@ class TransferBanking(BottleResource):
         return self.status_generate(200, "cash transfered successfuly")
 
 class BalanceBanking(BottleResource):
-    pass
+    @api_post("/balance_banking")
+    def post(self):
+        pass
 
 
 
