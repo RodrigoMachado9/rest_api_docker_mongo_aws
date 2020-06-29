@@ -23,10 +23,9 @@ users_similarity = db["users_similarity"]  # instance of collections two
 db = client.image_recognition
 users_recognition = db["users_recognition"]  # instance of collections two
 
-
-
-db  = client.database_banking_api
+db = client.database_banking_api
 users_banking = db["users_banking_banking_api"]
+
 
 # https://passlib.readthedocs.io/en/stable/lib/passlib.hash.bcrypt.html
 
@@ -104,7 +103,6 @@ class Store(BottleResource):
 
 class Sentence(BottleResource):
 
-
     def verify_password(self, username: str, password: str) -> bool:
         hashed_password = users.find({
             "username": username
@@ -175,6 +173,7 @@ class Similarity(BottleResource):
         })
         return self.status_generate(200, "you've successfully signed up to the API")
 
+
 class Detect(BottleResource):
 
     def status_generate(self, status: int, message: str, similarity: str = None) -> dict:
@@ -202,7 +201,6 @@ class Detect(BottleResource):
         })[0]["tokens"]
         return tokens
 
-
     @api_post('/detect')
     def detect(self):
         posted_data = request.json
@@ -223,23 +221,22 @@ class Detect(BottleResource):
         num_tokens = self.count_tokens(username)
 
         if num_tokens <= 0:
-            return self.status_generate(303,  "you're tokens, please refill ! ")
+            return self.status_generate(303, "you're tokens, please refill ! ")
 
         # calculate of distance ...
         nlp = spacy.load('en_core_web_sm')
         text1 = nlp(text1)
         text2 = nlp(text2)
 
-
         # ratio is a number between 0 and 1 the closer to 1, the more similar text and text2
         ratio = text1.similarity(text2)
         current_tokens = self.count_tokens(username)
         users_similarity.update({"username": username},
-                                 {"$set": {
-                                     "tokens": current_tokens - 1
-                                 }})
+                                {"$set": {
+                                    "tokens": current_tokens - 1
+                                }})
 
-        return self.status_generate(200,  "similarity score calculated successfully",  ratio)
+        return self.status_generate(200, "similarity score calculated successfully", ratio)
 
 
 class Refill(BottleResource):
@@ -271,7 +268,7 @@ class Refill(BottleResource):
 
         # todo >>> build collection to manage administrators ..
         correct_password = "helloworld@123"
-        is_correct_password =  True if (correct_password == password) else False
+        is_correct_password = True if (correct_password == password) else False
         if not is_correct_password:
             return self.status_generate(304, "invalid admin password !!")
 
@@ -302,7 +299,7 @@ class RegisterImageRecognition(BottleResource):
 
         is_user_exists = self.user_exists(username)
         if is_user_exists:
-            return self.status_generate(301,  "this user exists in the database !!")
+            return self.status_generate(301, "this user exists in the database !!")
 
         hashed_pasword = bcrypt.hash(password)
         users_recognition.insert({"username": username,
@@ -311,7 +308,7 @@ class RegisterImageRecognition(BottleResource):
                                   "uuid": uuid.uuid4(),
                                   "created_at": datetime.datetime.now()})
 
-        return self.status_generate(200,  "you successfully signed up !!")
+        return self.status_generate(200, "you successfully signed up !!")
 
 
 class Classify(BottleResource):
@@ -335,10 +332,9 @@ class Classify(BottleResource):
 
         correct_password = self.verify_password(username, password)
         if not correct_password:
-            self.status_generate(302,  "Invalid password ... ")
+            self.status_generate(302, "Invalid password ... ")
 
         return None, False
-
 
     @api_post('/classify')
     def classify(self):
@@ -361,7 +357,9 @@ class Classify(BottleResource):
         with open('/usr/src/app/temp.jpg', 'wb') as f:
             f.write(r.content)
             # proc = subprocess.Popen('python classify_image.py --model_dir=. --image_file=./temp.jpg', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
-            proc = subprocess.Popen('python classify_image.py --model_dir=/usr/src/app/ --image_file=/usr/src/app/temp.jpg', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+            proc = subprocess.Popen(
+                'python classify_image.py --model_dir=/usr/src/app/ --image_file=/usr/src/app/temp.jpg',
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
             ret = proc.communicate()[0]
             proc.wait()
 
@@ -373,7 +371,6 @@ class Classify(BottleResource):
         }})
 
         return self.status_generate(200, ret_json)
-
 
 
 def verify_credentials(username: str, password: str) -> [str, bool]:
@@ -396,25 +393,31 @@ def verify_password(username: str, password: str):
         return True if match_password else False
     return False
 
+
 def user_exist(username: str) -> bool:
     if username:
         is_user = users_banking.find({"username": username}).count()
         return False if (is_user == 0) else True
     return False
 
+
 def cash_with_user(username: str):
     cash = users_banking.find({"username": username})[0]["own"]
     return cash
+
 
 def debt_with_user(username):
     debt = users_banking.find({"username": username})[0]["debt"]
     return debt
 
+
 def update_account(username: str, balance):
     users_banking.update({"username": username}, {"$set": {"own": balance}})
 
+
 def update_debt(username, balance):
     users_banking.update({"username": username}, {"$set": {"debt": balance}})
+
 
 def status_generate(status: int, message: str, recognition: str = None) -> [dict]:
     return {"status": status, "recognition": recognition, "message": message}
@@ -441,8 +444,9 @@ class RegisterBanking(BottleResource):
             return self.status_generate(301, "invalid username")
 
         hashed_password = bcrypt.hash(password)
-        users_banking.insert({"username": username, "password": hashed_password, "own": 0,  "debt": 0})
-        return self.status_generate(200,  "you successfully signed up for api >>> banking_api")
+        users_banking.insert({"username": username, "password": hashed_password, "own": 0, "debt": 0})
+        return self.status_generate(200, "you successfully signed up for api >>> banking_api")
+
 
 class AddBanking(BottleResource):
     def update_account(self, username: str, balance):
@@ -478,7 +482,7 @@ class AddBanking(BottleResource):
             return self.status_generate(301, message), True
         correct_password = self.verify_password(username, password)
         if not correct_password:
-            return self.status_generate(302,  "incorrect password"), True
+            return self.status_generate(302, "incorrect password"), True
         return None, False
 
     @api_post("/add_banking")
@@ -499,9 +503,10 @@ class AddBanking(BottleResource):
         cash = self.cash_with_user(username)
         money -= 1
         bank_cash = self.cash_with_user("BANK")
-        self.update_account("BANK", bank_cash+1)
-        self.update_account(username, cash+money)
+        self.update_account("BANK", bank_cash + 1)
+        self.update_account(username, cash + money)
         return self.status_generate(200, "amount added successfully to account")
+
 
 class TransferBanking(BottleResource):
 
@@ -538,9 +543,8 @@ class TransferBanking(BottleResource):
             return self.status_generate(301, message), True
         correct_password = self.verify_password(username, password)
         if not correct_password:
-            return self.status_generate(302,  "incorrect password"), True
+            return self.status_generate(302, "incorrect password"), True
         return None, False
-
 
     @api_post("/transfer_banking")
     def post(self):
@@ -567,12 +571,12 @@ class TransferBanking(BottleResource):
         # cash_to = self.cash_with_user(to)
         bank_cash = self.cash_with_user("BANK")
 
-
         self.update_account("BANK", bank_cash + 1)
         # self.update_account(to, (cash_to + money) - 1)
         self.update_account(username, (cash_from - money))
 
         return self.status_generate(200, "cash transfered successfuly")
+
 
 class BalanceBanking(BottleResource):
     @api_post("/balance_banking")
@@ -588,6 +592,7 @@ class BalanceBanking(BottleResource):
         res_json = users_banking.find({"username": username}, {"password": password, "_id": 0})[0]
         return status_generate(200, res_json)
 
+
 class TakeLoanBanking(BottleResource):
 
     @api_post("/take_loan_banking")
@@ -601,10 +606,10 @@ class TakeLoanBanking(BottleResource):
 
         if error:
             return res_json
-        cash =  cash_with_user(username)
+        cash = cash_with_user(username)
         debt = debt_with_user(username)
         update_account(username, cash + money)
-        update_debt(username, debt  + money)
+        update_debt(username, debt + money)
         return status_generate(200, "loan added to your account")
 
 
@@ -630,11 +635,6 @@ class PayLoan(BottleResource):
         update_debt(username, debt - money)
 
         return status_generate(200, "you've successfully paid your loan")
-    
-
-
-
-
 
 
 if __name__ == '__main__':
